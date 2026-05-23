@@ -1,0 +1,245 @@
+using System;
+
+class JogoDaVelha
+{
+    static char[] tabuleiro = { '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+    static int    rodada    = 1;
+    static bool   jogoAtivo = true;
+
+    static void Main()
+    {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        ExibirBoasVindas();
+
+        while (jogoAtivo)
+        {
+            ExibirTabuleiro();
+            char jogadorAtual = ObterJogadorAtual();
+            int  posicao      = LerJogada(jogadorAtual);
+
+            RealizarJogada(posicao, jogadorAtual);
+
+            if (VerificarVitoria(jogadorAtual))
+            {
+                ExibirTabuleiro();
+                AnunciarVencedor(jogadorAtual);
+                jogoAtivo = false;
+            }
+            else if (VerificarEmpate())
+            {
+                ExibirTabuleiro();
+                AnunciarEmpate();
+                jogoAtivo = false;
+            }
+            else
+            {
+                rodada++;
+            }
+        }
+
+        PerguntarReiniciar();
+    }
+
+    static void ExibirBoasVindas()
+    {
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("╔══════════════════════════════╗");
+        Console.WriteLine("║      JOGO DA VELHA           ║");
+        Console.WriteLine("╚══════════════════════════════╝");
+        Console.ResetColor();
+        Console.WriteLine("\n  Jogador 1 → X     Jogador 2 → O");
+        Console.WriteLine("  Digite o número da posição desejada.\n");
+    }
+
+    static void ExibirTabuleiro()
+    {
+        Console.WriteLine();
+        Console.WriteLine("  ┌───┬───┬───┐");
+
+        for (int linha = 0; linha < 3; linha++)
+        {
+            Console.Write("  │");
+            for (int col = 0; col < 3; col++)
+            {
+                int idx = linha * 3 + col;
+                ExibirCelula(tabuleiro[idx]);
+                Console.Write("│");
+            }
+
+            if (linha < 2)
+                Console.WriteLine("\n  ├───┼───┼───┤");
+        }
+
+        Console.WriteLine("\n  └───┴───┴───┘");
+        Console.WriteLine();
+    }
+
+    static void ExibirCelula(char celula)
+    {
+        if (celula == 'X')
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Write(" X ");
+        }
+        else if (celula == 'O')
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write(" O ");
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write($" {celula} ");
+        }
+        Console.ResetColor();
+    }
+
+    static void AnunciarVencedor(char jogador)
+    {
+        Console.ForegroundColor = (jogador == 'X') ? ConsoleColor.Red : ConsoleColor.Green;
+        Console.WriteLine($"    Parabéns! Jogador {NomeJogador(jogador)} ({jogador}) venceu!\n");
+        Console.ResetColor();
+    }
+
+    static void AnunciarEmpate()
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("    Empate! Nenhum jogador venceu.\n");
+        Console.ResetColor();
+    }
+
+    static char ObterJogadorAtual()
+    {
+        return (rodada % 2 != 0) ? 'X' : 'O';
+    }
+
+    static string NomeJogador(char simbolo)
+    {
+        return (simbolo == 'X') ? "1" : "2";
+    }
+
+    static int LerJogada(char jogador)
+    {
+        int posicao;
+        while (true)
+        {
+            Console.Write($"  Jogador {NomeJogador(jogador)} ({jogador}), escolha uma posição [1-9]: ");
+            string entrada = Console.ReadLine();
+
+            if (!int.TryParse(entrada, out posicao) || posicao < 1 || posicao > 9)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("    Entrada inválida. Digite um número entre 1 e 9.\n");
+                Console.ResetColor();
+                continue;
+            }
+
+            if (!PosicaoDisponivel(posicao - 1))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("   Posição já ocupada. Escolha outra.\n");
+                Console.ResetColor();
+                continue;
+            }
+
+            break;
+        }
+
+        return posicao - 1; // converte para índice 0–8
+    }
+
+    static bool PosicaoDisponivel(int indice)
+    {
+        return tabuleiro[indice] != 'X' && tabuleiro[indice] != 'O';
+    }
+
+    static void RealizarJogada(int indice, char simbolo)
+    {
+        tabuleiro[indice] = simbolo;
+    }
+
+    static bool VerificarVitoria(char simbolo)
+    {
+
+        if (LinhaVencedora(0, 1, 2, simbolo)) return true;
+        if (LinhaVencedora(3, 4, 5, simbolo)) return true;
+        if (LinhaVencedora(6, 7, 8, simbolo)) return true;
+
+
+        if (LinhaVencedora(0, 3, 6, simbolo)) return true;
+        if (LinhaVencedora(1, 4, 7, simbolo)) return true;
+        if (LinhaVencedora(2, 5, 8, simbolo)) return true;
+
+
+        if (LinhaVencedora(0, 4, 8, simbolo)) return true;
+        if (LinhaVencedora(2, 4, 6, simbolo)) return true;
+
+        return false;
+    }
+
+    static bool LinhaVencedora(int a, int b, int c, char simbolo)
+    {
+        return tabuleiro[a] == simbolo &&
+               tabuleiro[b] == simbolo &&
+               tabuleiro[c] == simbolo;
+    }
+
+    static bool VerificarEmpate()
+    {
+        return rodada >= 9;
+    }
+
+    static void PerguntarReiniciar()
+    {
+        Console.Write("  Jogar novamente? (s/n): ");
+        string resposta = Console.ReadLine()?.Trim().ToLower();
+
+        if (resposta == "s")
+            ReiniciarJogo();
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("\n  Obrigado por jogar! Até a próxima. \n");
+            Console.ResetColor();
+        }
+    }
+
+    static void ReiniciarJogo()
+    {
+        tabuleiro = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+        rodada    = 1;
+        jogoAtivo = true;
+
+        Console.Clear();
+        ExibirBoasVindas();
+
+        while (jogoAtivo)
+        {
+            ExibirTabuleiro();
+            char jogadorAtual = ObterJogadorAtual();
+            int  posicao      = LerJogada(jogadorAtual);
+
+            RealizarJogada(posicao, jogadorAtual);
+
+            if (VerificarVitoria(jogadorAtual))
+            {
+                ExibirTabuleiro();
+                AnunciarVencedor(jogadorAtual);
+                jogoAtivo = false;
+            }
+            else if (VerificarEmpate())
+            {
+                ExibirTabuleiro();
+                AnunciarEmpate();
+                jogoAtivo = false;
+            }
+            else
+            {
+                rodada++;
+            }
+        }
+
+        PerguntarReiniciar();
+    }
+}
